@@ -1,137 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mines Game</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background: radial-gradient(ellipse at top left, #0f0f0f, #1a1a1a);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 450px;
-      aspect-ratio: 1;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 15px;
-      border-radius: 20px;
-      backdrop-filter: blur(30px);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-
-    .tile {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      aspect-ratio: 1;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      user-select: none;
-      position: relative;
-    }
-
-    .tile:active {
-      transform: scale(0.97);
-    }
-
-    .tile.revealed {
-      background: rgba(255, 255, 255, 0.1);
-      pointer-events: none;
-    }
-
-    .icon {
-      width: 28px;
-      height: 28px;
-    }
-
-    .message {
-      position: fixed;
-      top: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 12px 20px;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-      font-size: 1.2rem;
-      z-index: 100;
-      box-shadow: 0 0 10px rgba(255,255,255,0.1);
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Diamond Mine Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="message" class="message" style="display:none;"></div>
-  <div class="container" id="grid"></div>
-
+  <div class="game-container">
+    <header>
+      <h1>
+        <span class="diamond">💎</span>
+        Diamond Mine
+        <span class="bomb">💣</span>
+      </h1>
+      <p class="subtitle">Unlock all the diamonds, avoid the bomb!</p>
+    </header>
+    <main>
+      <div class="status-bar">
+        <div class="status-item"><span>Diamonds:</span> <span id="diamonds-found">0</span>/<span id="total-diamonds">0</span></div>
+        <div class="status-item"><span>Tries:</span> <span id="tries">0</span></div>
+        <button id="reset-btn" class="reset-btn">🔄 Reset</button>
+      </div>
+      <div class="mine-grid" id="mine-grid">
+        <!-- Buttons will be dynamically inserted here -->
+      </div>
+      <div class="end-message" id="end-message">
+        <!-- Win/Lose message appears here -->
+      </div>
+    </main>
+    <footer>
+      <p>Made with <span class="heart">♥</span> for the best game site experience</p>
+    </footer>
+  </div>
   <script>
-    const grid = document.getElementById('grid');
-    const message = document.getElementById('message');
-    const size = 5;
-    const totalTiles = size * size;
-    const bombIndex = Math.floor(Math.random() * totalTiles);
-    let revealed = 0;
-    let gameOver = false;
+    // --- Game Configuration ---
+    const ROWS = 5;
+    const COLS = 5;
+    const BOMB_COUNT = 1;
+    const DIAMOND = '💎';
+    const BOMB = '💣';
 
-    const diamondSVG = `<svg class="icon" fill="#00ffff" viewBox="0 0 24 24"><path d="M12 2L2 9l10 13 10-13-10-7zm0 2.1L19.6 9 12 20 4.4 9 12 4.1z"/></svg>`;
-    const bombSVG = `<svg class="icon" fill="#ff4444" viewBox="0 0 24 24"><path d="M11 2h2v4h-2zm-1.293 1.293l1.414 1.414-2.121 2.121-1.414-1.414zM4 11H0v2h4zm1.293 5.707l-1.414-1.414 2.121-2.121 1.414 1.414zM11 18h2v4h-2zm5.707-1.293l1.414 1.414-2.121 2.121-1.414-1.414zM20 11h4v2h-4zm-1.293-5.707l1.414 1.414-2.121 2.121-1.414-1.414z"/><circle cx="12" cy="13" r="7"/></svg>`;
+    // --- State ---
+    let bombIndex = -1;
+    let diamondsFound = 0;
+    let tries = 0;
+    let gameActive = true;
+    let totalDiamonds = ROWS * COLS - BOMB_COUNT;
 
-    for (let i = 0; i < totalTiles; i++) {
-      const tile = document.createElement('div');
-      tile.classList.add('tile');
-      tile.dataset.index = i;
-      tile.addEventListener('click', () => revealTile(tile, i));
-      grid.appendChild(tile);
+    // --- Elements ---
+    const grid = document.getElementById('mine-grid');
+    const diamondsFoundEl = document.getElementById('diamonds-found');
+    const totalDiamondsEl = document.getElementById('total-diamonds');
+    const triesEl = document.getElementById('tries');
+    const endMessage = document.getElementById('end-message');
+    const resetBtn = document.getElementById('reset-btn');
+
+    // --- Functions ---
+    function shuffleBomb() {
+      bombIndex = Math.floor(Math.random() * (ROWS * COLS));
     }
 
-    function revealTile(tile, index) {
-      if (gameOver || tile.classList.contains('revealed')) return;
-
-      tile.classList.add('revealed');
-
-      if (index == bombIndex) {
-        tile.innerHTML = bombSVG;
-        endGame(false);
-      } else {
-        tile.innerHTML = diamondSVG;
-        revealed++;
-        if (revealed === totalTiles - 1) {
-          endGame(true);
-        }
+    function renderGrid() {
+      grid.innerHTML = '';
+      for (let i = 0; i < ROWS * COLS; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'mine-btn';
+        btn.setAttribute('data-idx', i);
+        btn.setAttribute('aria-label', 'Hidden cell');
+        btn.disabled = !gameActive;
+        btn.innerHTML = '<span class="cover"></span>';
+        grid.appendChild(btn);
       }
     }
 
-    function endGame(won) {
-      gameOver = true;
-      message.innerText = won ? "🎉 You Win! All diamonds found." : "💣 Boom! You clicked the bomb!";
-      message.style.display = 'block';
+    function revealCell(idx, btn) {
+      if (!gameActive) return;
+      tries++;
+      triesEl.textContent = tries;
 
-      // Reveal all tiles
-      [...grid.children].forEach((tile, idx) => {
-        if (!tile.classList.contains('revealed')) {
-          tile.classList.add('revealed');
-          tile.innerHTML = idx === bombIndex ? bombSVG : diamondSVG;
+      if (idx === bombIndex) {
+        btn.classList.add('exploded');
+        btn.innerHTML = `<span class="emoji">${BOMB}</span>`;
+        gameOver(false);
+      } else {
+        btn.classList.add('diamond');
+        btn.innerHTML = `<span class="emoji">${DIAMOND}</span>`;
+        diamondsFound++;
+        diamondsFoundEl.textContent = diamondsFound;
+        if (diamondsFound === totalDiamonds) {
+          gameOver(true);
+        }
+      }
+      btn.disabled = true;
+    }
+
+    function gameOver(win) {
+      gameActive = false;
+      document.querySelectorAll('.mine-btn').forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === bombIndex && win) {
+          btn.innerHTML = `<span class="emoji bomb-hint">${BOMB}</span>`;
         }
       });
+      endMessage.innerHTML = win
+        ? `<div class="message win"><span>🎉 You found all the diamonds!</span></div>`
+        : `<div class="message lose"><span>💥 Boom! You hit the bomb.</span></div>`;
+      endMessage.style.display = 'block';
     }
+
+    function resetGame() {
+      diamondsFound = 0;
+      tries = 0;
+      gameActive = true;
+      totalDiamonds = ROWS * COLS - BOMB_COUNT;
+      endMessage.style.display = 'none';
+      diamondsFoundEl.textContent = diamondsFound;
+      totalDiamondsEl.textContent = totalDiamonds;
+      triesEl.textContent = tries;
+      shuffleBomb();
+      renderGrid();
+      document.querySelectorAll('.mine-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          revealCell(idx, btn);
+        });
+      });
+    }
+
+    // --- Startup ---
+    resetBtn.addEventListener('click', resetGame);
+    resetGame();
   </script>
 </body>
 </html>
