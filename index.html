@@ -1,577 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diamond Hunt | Premium Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --glass-bg: rgba(28, 28, 30, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-highlight: rgba(255, 255, 255, 0.05);
-            --primary: rgba(10, 132, 255, 0.9);
-            --primary-light: rgba(10, 132, 255, 0.6);
-            --danger: rgba(255, 69, 58, 0.9);
-            --success: rgba(48, 209, 88, 0.9);
-            --text-primary: rgba(255, 255, 255, 0.9);
-            --text-secondary: rgba(255, 255, 255, 0.6);
-            --text-tertiary: rgba(255, 255, 255, 0.3);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #000000 0%, #1a1a1c 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            color: var(--text-primary);
-            overflow: hidden;
-        }
-        
-        .background-blobs {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-        
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(60px);
-            opacity: 0.15;
-        }
-        
-        .blob-1 {
-            width: 300px;
-            height: 300px;
-            background: var(--primary);
-            top: -100px;
-            left: -100px;
-        }
-        
-        .blob-2 {
-            width: 400px;
-            height: 400px;
-            background: var(--danger);
-            bottom: -150px;
-            right: -100px;
-        }
-        
-        .glass-panel {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 24px;
-            max-width: 400px;
-            width: 100%;
-        }
-        
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .subtitle {
-            font-size: 15px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-        
-        .stats-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        
-        .stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex: 1;
-        }
-        
-        .stat-value {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .diamonds-stat .stat-value {
-            color: var(--primary-light);
-        }
-        
-        .score-stat .stat-value {
-            color: var(--text-primary);
-        }
-        
-        .remaining-stat .stat-value {
-            color: var(--text-secondary);
-        }
-        
-        .game-area {
-            padding: 20px;
-            min-height: 260px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .tile {
-            aspect-ratio: 1/1;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
-            overflow: hidden;
-            background: rgba(50, 50, 55, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .tile .icon {
-            width: 24px;
-            height: 24px;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: all 0.3s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-        }
-        
-        .tile.revealed {
-            background: rgba(40, 40, 45, 0.8);
-            border-color: rgba(255, 255, 255, 0.03);
-            transform: scale(0.95);
-        }
-        
-        .tile.revealed .icon {
-            opacity: 1;
-            transform: scale(1);
-        }
-        
-        .tile.diamond {
-            background: rgba(10, 132, 255, 0.15);
-            border-color: rgba(10, 132, 255, 0.3);
-        }
-        
-        .tile.diamond .icon {
-            filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.6));
-        }
-        
-        .tile.bomb {
-            background: rgba(255, 69, 58, 0.15);
-            border-color: rgba(255, 69, 58, 0.3);
-            animation: bomb-pulse 0.8s infinite alternate;
-        }
-        
-        .tile.bomb .icon {
-            filter: drop-shadow(0 0 8px rgba(255, 69, 58, 0.6));
-        }
-        
-        .controls {
-            display: flex;
-            gap: 12px;
-            padding: 16px 20px;
-            border-top: 1px solid var(--glass-border);
-        }
-        
-        .btn {
-            flex: 1;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: rgba(10, 132, 255, 1);
-        }
-        
-        .btn-danger {
-            background: rgba(255, 69, 58, 0.2);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 69, 58, 0.3);
-        }
-        
-        .btn-danger:hover {
-            background: rgba(255, 69, 58, 0.3);
-        }
-        
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .start-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 24px;
-        }
-        
-        .start-screen p {
-            color: var(--text-secondary);
-            font-size: 15px;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        
-        .game-paused {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            gap: 24px;
-        }
-        
-        .game-paused h3 {
-            font-size: 20px;
-            color: var(--text-primary);
-        }
-        
-        .game-paused p {
-            color: var(--text-secondary);
-            font-size: 15px;
-        }
-        
-        @keyframes bomb-pulse {
-            0% { transform: scale(0.95); }
-            100% { transform: scale(1.03); }
-        }
-        
-        .confetti {
-            position: fixed;
-            width: 12px;
-            height: 12px;
-            background: var(--primary);
-            opacity: 0;
-            z-index: 99;
-            border-radius: 50%;
-        }
-        
-        @media (max-width: 400px) {
-            .game-grid {
-                gap: 6px;
-            }
-            
-            .tile .icon {
-                width: 20px;
-                height: 20px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mines Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(ellipse at top left, #0f0f0f, #1a1a1a);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 20px;
+      backdrop-filter: blur(30px);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+
+    .tile {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      aspect-ratio: 1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
+    }
+
+    .tile:active {
+      transform: scale(0.97);
+    }
+
+    .tile.revealed {
+      background: rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+    }
+
+    .icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .message {
+      position: fixed;
+      top: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      font-size: 1.2rem;
+      z-index: 100;
+      box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+  </style>
 </head>
 <body>
-    <div class="background-blobs">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
-    
-    <header>
-        <h1>Diamond Hunt</h1>
-        <p class="subtitle">Find all diamonds without triggering the bomb</p>
-    </header>
-    
-    <div class="glass-panel">
-        <div class="stats-row">
-            <div class="stat diamonds-stat">
-                <div class="stat-value" id="diamonds-found">0</div>
-                <div class="stat-label">Diamonds</div>
-            </div>
-            <div class="stat remaining-stat">
-                <div class="stat-value" id="remaining">25</div>
-                <div class="stat-label">Remaining</div>
-            </div>
-        </div>
-        
-        <div class="game-area">
-            <div class="start-screen" id="start-screen">
-                <p>Click Start to begin your diamond hunt adventure</p>
-                <button class="btn btn-primary" id="start-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 16.5V7.5L16 12L10 16.5Z" fill="currentColor"/>
-                    </svg>
-                    Start Game
-                </button>
-            </div>
-            
-            <div class="game-paused" id="game-paused">
-                <h3>Game Paused</h3>
-                <p>Your progress has been saved</p>
-                <button class="btn btn-primary" id="resume-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 16.5V7.5L16 12L10 16.5Z" fill="currentColor"/>
-                    </svg>
-                    Resume
-                </button>
-            </div>
-            
-            <div class="game-grid" id="game-grid"></div>
-        </div>
-        
-        <div class="controls">
-            <button class="btn btn-secondary" id="pause-btn" style="display: none;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM11 16H9V8H11V16ZM15 16H13V8H15V16Z" fill="currentColor"/>
-                </svg>
-                Pause
-            </button>
-            <button class="btn btn-danger" id="end-btn" style="display: none;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.47 2 2 6.47 2 12C2 17.53 6.47 22 12 22C17.53 22 22 17.53 22 12C22 6.47 17.53 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 20 12 20ZM15.59 7L12 10.59L8.41 7L7 8.41L10.59 12L7 15.59L8.41 17L12 13.41L15.59 17L17 15.59L13.41 12L17 8.41L15.59 7Z" fill="currentColor"/>
-                </svg>
-                End Game
-            </button>
-        </div>
-    </div>
-    
-    <!-- SVG Icons (hidden) -->
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-        <symbol id="diamond-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M19 12h-4v4h-2v-4H7v-2h4V6h2v4h4v2z"/>
-        </symbol>
-        <symbol id="bomb-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
-        </symbol>
-    </svg>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Game state
-            const gameState = {
-                gridSize: 25, // 5x5 grid
-                bombPosition: null,
-                revealedTiles: [],
-                gameOver: false,
-                isPaused: false,
-                gameStarted: false
-            };
-            
-            // DOM elements
-            const gameGrid = document.getElementById('game-grid');
-            const startScreen = document.getElementById('start-screen');
-            const gamePaused = document.getElementById('game-paused');
-            const diamondsFoundEl = document.getElementById('diamonds-found');
-            const remainingEl = document.getElementById('remaining');
-            const startBtn = document.getElementById('start-btn');
-            const pauseBtn = document.getElementById('pause-btn');
-            const endBtn = document.getElementById('end-btn');
-            const resumeBtn = document.getElementById('resume-btn');
-            
-            // Initialize game
-            resetGame();
-            
-            // Event listeners
-            startBtn.addEventListener('click', startGame);
-            pauseBtn.addEventListener('click', pauseGame);
-            endBtn.addEventListener('click', endGame);
-            resumeBtn.addEventListener('click', resumeGame);
-            
-            // Functions
-            function resetGame() {
-                // Reset UI
-                startScreen.style.display = 'flex';
-                gamePaused.style.display = 'none';
-                gameGrid.style.display = 'none';
-                pauseBtn.style.display = 'none';
-                endBtn.style.display = 'none';
-                
-                // Clear any existing tiles
-                gameGrid.innerHTML = '';
-                
-                // Reset game state
-                gameState.bombPosition = null;
-                gameState.revealedTiles = [];
-                gameState.gameOver = false;
-                gameState.isPaused = false;
-                gameState.gameStarted = false;
-                
-                // Update UI
-                diamondsFoundEl.textContent = '0';
-                remainingEl.textContent = '25';
-            }
-            
-            function startGame() {
-                gameState.gameStarted = true;
-                gameState.bombPosition = Math.floor(Math.random() * gameState.gridSize);
-                
-                // Hide start screen and show game grid
-                startScreen.style.display = 'none';
-                gameGrid.style.display = 'grid';
-                
-                // Show game controls
-                pauseBtn.style.display = 'flex';
-                endBtn.style.display = 'flex';
-                
-                // Generate grid
-                for (let i = 0; i < gameState.gridSize; i++) {
-                    const tile = document.createElement('div');
-                    tile.className = 'tile';
-                    tile.dataset.index = i;
-                    
-                    // Add icon container
-                    const icon = document.createElement('div');
-                    icon.className = 'icon';
-                    
-                    // Determine which icon to use
-                    if (i === gameState.bombPosition) {
-                        icon.innerHTML = `
-                            <svg viewBox="0 0 24 24">
-                                <use xlink:href="#bomb-icon"></use>
-                            </svg>
-                        `;
-                    } else {
-                        icon.innerHTML = `
-                            <svg viewBox="0 0 24 24">
-                                <use xlink:href="#diamond-icon"></use>
-                            </svg>
-                        `;
-                    }
-                    
-                    tile.appendChild(icon);
-                    tile.addEventListener('click', () => handleTileClick(i));
-                    gameGrid.appendChild(tile);
-                }
-            }
-            
-            function pauseGame() {
-                if (gameState.gameOver) return;
-                
-                gameState.isPaused = true;
-                gamePaused.style.display = 'flex';
-                gameGrid.style.display = 'none';
-                
-                // Disable tiles
-                document.querySelectorAll('.tile').forEach(tile => {
-                    tile.style.pointerEvents = 'none';
-                });
-            }
-            
-            function resumeGame() {
-                gameState.isPaused = false;
-                gamePaused.style.display = 'none';
-                gameGrid.style.display = 'grid';
-                
-                // Enable tiles
-                document.querySelectorAll('.tile').forEach(tile => {
-                    tile.style.pointerEvents = 'auto';
-                });
-            }
-            
-            function endGame() {
-                if (confirm('Are you sure you want to end the current game?')) {
-                    resetGame();
-                }
-            }
-            
-            function handleTileClick(index) {
-                if (gameState.gameOver || gameState.isPaused || gameState.revealedTiles.includes(index)) return;
-                
-                const tile = document.querySelector(`.tile[data-index="${index}"]`);
-                tile.classList.add('revealed');
-                gameState.revealedTiles.push(index);
-                
-                if (index === gameState.bombPosition) {
-                    // Clicked on bomb
-                    tile.classList.add('bomb');
-                    gameState.gameOver = true;
-                    revealAllTiles();
-                    setTimeout(() => {
-                        alert('Game Over! You triggered the bomb.');
-                        resetGame();
-                    }, 800);
-                } else {
-                    // Clicked on diamond
-                    tile.classList.add('diamond');
-                    
-                    // Update stats
-                    const diamondsFound = gameState.revealedTiles.length - 
-                        (gameState.revealedTiles.includes(gameState.bombPosition) ? 1 : 0);
-                    diamondsFoundEl.textContent = diamondsFound;
-                    remainingEl.textContent = gameState.gridSize - gameState.revealedTiles.length;
-                    
-                    // Check for win
-                    if (gameState.revealedTiles.length === gameState.gridSize - 1 && 
-                        !gameState.revealedTiles.includes(gameState.bombPosition)) {
-                        gameState.gameOver = true;
-                        createConfetti();
-                        setTimeout(() => {
-                            alert('Congratulations! You found all the diamonds!');
-                            resetGame();
-                        }, 800);
-                    }
-                }
-            }
-            
-            function revealAllTiles() {
-                for (let i = 0; i < gameState.gridSize; i++) {
-                    const tile = document.querySelector(`.tile[data-index="${i}"]`);
-                    if (!tile.classList.contains('revealed')) {
-                        tile.classList.add('revealed');
-                        if (i === gameState.
+  <div id="message" class="message" style="display:none;"></div>
+  <div class="container" id="grid"></div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const message = document.getElementById('message');
+    const size = 5;
+    const totalTiles = size * size;
+    const bombIndex = Math.floor(Math.random() * totalTiles);
+    let revealed = 0;
+    let gameOver = false;
+
+    const diamondSVG = `<svg class="icon" fill="#00ffff" viewBox="0 0 24 24"><path d="M12 2L2 9l10 13 10-13-10-7zm0 2.1L19.6 9 12 20 4.4 9 12 4.1z"/></svg>`;
+    const bombSVG = `<svg class="icon" fill="#ff4444" viewBox="0 0 24 24"><path d="M11 2h2v4h-2zm-1.293 1.293l1.414 1.414-2.121 2.121-1.414-1.414zM4 11H0v2h4zm1.293 5.707l-1.414-1.414 2.121-2.121 1.414 1.414zM11 18h2v4h-2zm5.707-1.293l1.414 1.414-2.121 2.121-1.414-1.414zM20 11h4v2h-4zm-1.293-5.707l1.414 1.414-2.121 2.121-1.414-1.414z"/><circle cx="12" cy="13" r="7"/></svg>`;
+
+    for (let i = 0; i < totalTiles; i++) {
+      const tile = document.createElement('div');
+      tile.classList.add('tile');
+      tile.dataset.index = i;
+      tile.addEventListener('click', () => revealTile(tile, i));
+      grid.appendChild(tile);
+    }
+
+    function revealTile(tile, index) {
+      if (gameOver || tile.classList.contains('revealed')) return;
+
+      tile.classList.add('revealed');
+
+      if (index == bombIndex) {
+        tile.innerHTML = bombSVG;
+        endGame(false);
+      } else {
+        tile.innerHTML = diamondSVG;
+        revealed++;
+        if (revealed === totalTiles - 1) {
+          endGame(true);
+        }
+      }
+    }
+
+    function endGame(won) {
+      gameOver = true;
+      message.innerText = won ? "🎉 You Win! All diamonds found." : "💣 Boom! You clicked the bomb!";
+      message.style.display = 'block';
+
+      // Reveal all tiles
+      [...grid.children].forEach((tile, idx) => {
+        if (!tile.classList.contains('revealed')) {
+          tile.classList.add('revealed');
+          tile.innerHTML = idx === bombIndex ? bombSVG : diamondSVG;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
